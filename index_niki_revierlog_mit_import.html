@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b3d5c">
+  <title>NIKI RevierLog</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    :root{
+      --bg:#f4f7f8; --card:#fff; --ink:#17313f; --muted:#6b7d86; --accent:#0b628c;
+      --border:#d6e0e4; --good:#1f7a4a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+    header{position:sticky;top:0;z-index:5;background:#0b3d5c;color:white;padding:14px 16px;box-shadow:0 2px 8px #0002}
+    header h1{font-size:20px;margin:0}
+    header small{opacity:.85}
+    main{max-width:760px;margin:0 auto;padding:14px 12px 90px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin:12px 0}
+    h2{font-size:18px;margin:0 0 10px}
+    label{display:block;font-size:14px;margin:10px 0 4px;color:var(--muted)}
+    input,select,textarea,button{font:inherit}
+    input,select,textarea{width:100%;border:1px solid var(--border);border-radius:12px;padding:11px;background:white;color:var(--ink)}
+    textarea{min-height:90px;resize:vertical}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .btn{border:0;border-radius:12px;padding:12px 14px;background:var(--accent);color:white;font-weight:600}
+    .btn.secondary{background:#e6eef2;color:var(--ink)}
+    .btn.good{background:var(--good)}
+    .btn.danger{background:#a53d3d}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .row .btn{flex:1;min-width:140px}
+    .gpsbox{border:1px dashed var(--border);border-radius:12px;padding:10px;background:#fbfdfe}
+    .gpsval{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-word}
+    .hint{font-size:12px;color:var(--muted);line-height:1.4}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e7f2f7;color:#0b628c;font-size:12px}
+    .stars{display:flex;gap:6px;margin-top:6px}
+    .stars input{display:none}
+    .stars label{font-size:28px;color:#c8d0d4;cursor:pointer;margin:0}
+    .stars input:checked ~ label{color:#c8d0d4}
+    .stars label.active{color:#f1b400}
+    .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+    .photo-grid img{width:100%;height:95px;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
+    .station{border-top:1px solid var(--border);padding:10px 0}
+    .station:first-child{border-top:0}
+    .station h3{margin:0 0 4px;font-size:16px}
+    .station small{color:var(--muted)}
+    nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--border);display:flex;justify-content:center;padding:8px;z-index:9}
+    nav .inner{width:min(760px,100%);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .hide{display:none!important}
+    @media(max-width:560px){.grid2,.grid3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>NIKI RevierLog</h1>
+  <small>Häfen · Ankerplätze · GPS · Fotos · Notizen</small>
+</header>
+
+<main>
+  <section id="formView">
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <h2>Neue Station</h2>
+        <span class="badge" id="saveState">noch nicht gespeichert</span>
+      </div>
+      <div class="grid2">
+        <div>
+          <label for="name">Name der Station</label>
+          <input id="name" placeholder="z. B. Porto Koufo">
+        </div>
+        <div>
+          <label for="type">Typ</label>
+          <select id="type">
+            <option>Hafen</option>
+            <option>Ankerbucht</option>
+            <option>Mooringboje</option>
+            <option>Landleinen</option>
+            <option>Zwischenstopp</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label for="date">Datum</label>
+          <input id="date" type="date">
+        </div>
+        <div>
+          <label for="time">Uhrzeit</label>
+          <input id="time" type="time">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>GPS</h2>
+      <div class="row">
+        <button class="btn good" id="anchorGps" type="button">⚓ ANKER FÄLLT</button>
+        <button class="btn" id="boatGps" type="button">📍 BOOT LIEGT</button>
+      </div>
+      <p class="hint">GPS funktioniert auf iPhone/iPad nur, wenn der Standortzugriff erlaubt ist. Auf einer veröffentlichten Web-App muss die Seite über HTTPS geöffnet werden.</p>
+
+      <label>Ankerposition</label>
+      <div class="gpsbox">
+        <div class="gpsval" id="anchorPos">noch nicht erfasst</div>
+      </div>
+
+      <label>Bootsposition</label>
+      <div class="gpsbox">
+        <div class="gpsval" id="boatPos">noch nicht erfasst</div>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <label for="manualLat">Position manuell – Breite</label>
+          <input id="manualLat" inputmode="decimal" placeholder="39.123456">
+        </div>
+        <div>
+          <label for="manualLon">Position manuell – Länge</label>
+          <input id="manualLon" inputmode="decimal" placeholder="23.123456">
+        </div>
+      </div>
+      <button class="btn secondary" id="manualToBoat" type="button">Manuelle Position als Bootsposition übernehmen</button>
+    </div>
+
+    <div class="card">
+      <h2>Ankern & Liegen</h2>
+      <div class="grid3">
+        <div><label for="depthBoat">Tiefe am Boot (m)</label><input id="depthBoat" inputmode="decimal"></div>
+        <div><label for="depthAnchor">Tiefe am Anker (m)</label><input id="depthAnchor" inputmode="decimal"></div>
+        <div><label for="chain">Kette (m)</label><input id="chain" inputmode="decimal"></div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label for="ground">Grund</label>
+          <select id="ground"><option>unbekannt</option><option>Sand</option><option>Schlamm</option><option>Seegras</option><option>Fels</option><option>gemischt</option></select>
+        </div>
+        <div>
+          <label for="holding">Ankerhalt</label>
+          <select id="holding"><option>nicht bewertet</option><option>sehr gut</option><option>gut</option><option>mäßig</option><option>problematisch</option></select>
+        </div>
+      </div>
+      <label for="mooring">Festmachart</label>
+      <select id="mooring"><option>Eigener Anker</option><option>Mooring</option><option>Boje</option><option>Längsseits</option><option>Anker + Landleinen</option><option>Anker + Mooring</option></select>
+      <label for="approach">Ansteuerung / Gefahren / Besonderheiten</label>
+      <textarea id="approach" placeholder="Bojen, Untiefen, Fähren, flache Stellen, sichere Einfahrt …"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Wind & Schutz</h2>
+      <div class="grid3">
+        <div><label for="windDir">Wind aus</label><input id="windDir" placeholder="N / NE / 045°"></div>
+        <div><label for="wind">Wind (kn)</label><input id="wind" inputmode="decimal"></div>
+        <div><label for="gust">Böen (kn)</label><input id="gust" inputmode="decimal"></div>
+      </div>
+      <div class="grid2">
+        <div><label for="swell">Schwell aus</label><input id="swell" placeholder="z. B. N"></div>
+        <div>
+          <label for="protection">Schutz</label>
+          <select id="protection"><option>nicht bewertet</option><option>sehr gut</option><option>gut</option><option>mäßig</option><option>schlecht</option></select>
+        </div>
+      </div>
+      <label for="weatherNotes">Winddreher / Wetterhinweise</label>
+      <textarea id="weatherNotes"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Versorgung</h2>
+      <div class="grid3">
+        <div><label for="water">Wasser</label><select id="water"><option>unbekannt</option><option>ja</option><option>nein</option><option>eingeschränkt</option></select></div>
+        <div><label for="power">Strom</label><select id="power"><option>unbekannt</option><option>ja</option><option>nein</option><option>eingeschränkt</option></select></div>
+        <div><label for="diesel">Diesel</label><select id="diesel"><option>unbekannt</option><option>Tankstelle</option><option>Tankwagen</option><option>am Kai</option><option>nein</option></select></div>
+      </div>
+      <div class="grid2">
+        <div><label for="fee">Liege-/Mooringgebühr (€)</label><input id="fee" inputmode="decimal"></div>
+        <div><label for="reserve">Reservierung</label><select id="reserve"><option>unbekannt</option><option>nicht nötig</option><option>sinnvoll</option><option>zwingend</option></select></div>
+      </div>
+      <label for="contact">Hafenmeister / Kontakt / WhatsApp</label><input id="contact">
+      <label for="shops">Einkauf / Bäcker / Gas / Technik / Waschmaschine</label><textarea id="shops"></textarea>
+      <label for="sanitary">Dusche / WC / Müll</label><textarea id="sanitary"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Landgang</h2>
+      <label for="restaurant">Restaurant-Tipp</label><input id="restaurant">
+      <label for="restaurantWhy">Warum?</label><textarea id="restaurantWhy"></textarea>
+      <label for="sights">Sehenswert / Ausflug / Mietwagen / Bus</label><textarea id="sights"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Fotos</h2>
+      <input id="photos" type="file" accept="image/*" multiple>
+      <p class="hint">Ideal: Plotter-Screenshot, Satellitenkarte, Einfahrt, Liegeplatz, Blick vom Boot, Versorgung, Restaurant, Sehenswürdigkeit. Fotos werden vor dem Speichern automatisch verkleinert.</p>
+      <div class="photo-grid" id="photoPreview"></div>
+    </div>
+
+    <div class="card">
+      <h2>Unsere Erfahrung</h2>
+      <label>Bewertung</label>
+      <div class="stars" id="stars">
+        <label data-v="1">★</label><label data-v="2">★</label><label data-v="3">★</label><label data-v="4">★</label><label data-v="5">★</label>
+      </div>
+      <input id="rating" type="hidden" value="0">
+      <label for="return">Würden wir wiederkommen?</label>
+      <select id="return"><option>unentschieden</option><option>unbedingt</option><option>ja</option><option>eher nicht</option></select>
+      <label for="story">Was ist hier passiert?</label>
+      <textarea id="story" placeholder="Anekdote, Problem, Begegnung, besonderer Moment …"></textarea>
+      <label for="tip">Unser wichtigster Tipp für andere Segler</label>
+      <textarea id="tip"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button class="btn good" id="save" type="button">Station speichern</button>
+        <button class="btn secondary" id="clear" type="button">Neue leere Station</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="listView" class="hide">
+    <div class="card">
+      <h2>Gespeicherte Stationen</h2>
+      <div id="stationList"><p class="hint">Noch keine Station gespeichert.</p></div>
+    </div>
+  </section>
+
+  <section id="exportView" class="hide">
+    <div class="card">
+      <h2>Export & Sicherung</h2>
+      <p>Exportiert die gespeicherten Revierdaten als JSON oder CSV. Der JSON-Export enthält auch die gespeicherten Fotodaten.</p>
+      <div class="row">
+        <button class="btn" id="exportJson" type="button">JSON exportieren</button>
+        <button class="btn secondary" id="exportCsv" type="button">CSV exportieren</button>
+      </div>
+
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <h2 style="font-size:16px">Sicherung wiederherstellen</h2>
+        <input id="importJsonFile" type="file" accept="application/json,.json" style="display:none">
+        <button class="btn good" id="importJson" type="button">JSON importieren</button>
+        <p class="hint">Importiert eine zuvor exportierte NIKI-RevierLog-Sicherung. Vorhandene Stationen bleiben erhalten; gleiche Einträge werden durch die importierte Version ersetzt.</p>
+      </div>
+
+      <p class="hint">Regelmäßig exportieren, besonders vor Gerätewechseln oder größeren iOS-Updates.</p>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <div class="inner">
+    <button class="btn" id="navForm" type="button">Neue Station</button>
+    <button class="btn secondary" id="navList" type="button">Stationen</button>
+    <button class="btn secondary" id="navExport" type="button">Export</button>
+  </div>
+</nav>
+
+<script>
+const $ = id => document.getElementById(id);
+const fields = ["name","type","date","time","manualLat","manualLon","depthBoat","depthAnchor","chain","ground","holding","mooring","approach","windDir","wind","gust","swell","protection","weatherNotes","water","power","diesel","fee","reserve","contact","shops","sanitary","restaurant","restaurantWhy","sights","rating","return","story","tip"];
+let anchor = null, boat = null, photosData = [], editingId = null;
+
+/* ---------- Datum / Uhrzeit ---------- */
+function nowDefaults(){
+  const d=new Date();
+  const local = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+  $("date").value=local.toISOString().slice(0,10);
+  $("time").value=d.toTimeString().slice(0,5);
+}
+nowDefaults();
+
+function fmtPos(p){
+  if(!p) return "noch nicht erfasst";
+  const acc = p.accuracy ? ` · ±${Math.round(p.accuracy)} m` : "";
+  return `${Number(p.lat).toFixed(6)}, ${Number(p.lon).toFixed(6)}${acc} · ${new Date(p.time).toLocaleString("de-DE")}`;
+}
+
+function setSaveState(text, ok=false){
+  $("saveState").textContent = text;
+  $("saveState").style.background = ok ? "#e5f5ec" : "";
+  $("saveState").style.color = ok ? "#1f7a4a" : "";
+}
+
+/* ---------- GPS ---------- */
+function getGps(kind){
+  if(!navigator.geolocation){
+    alert("Dieses Gerät unterstützt keine Standortabfrage.");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const p={lat:pos.coords.latitude, lon:pos.coords.longitude, accuracy:pos.coords.accuracy, time:Date.now()};
+    if(kind==="anchor"){ anchor=p; $("anchorPos").textContent=fmtPos(p); }
+    else { boat=p; $("boatPos").textContent=fmtPos(p); }
+    setSaveState("Änderungen noch nicht gespeichert");
+  }, err=>{
+    alert("GPS konnte nicht gelesen werden. Bitte Standortzugriff erlauben oder Position manuell eintragen. ("+err.message+")");
+  }, {enableHighAccuracy:true,timeout:12000,maximumAge:0});
+}
+
+$("anchorGps").addEventListener("click",()=>getGps("anchor"));
+$("boatGps").addEventListener("click",()=>getGps("boat"));
+$("manualToBoat").addEventListener("click",()=>{
+  const lat=parseFloat($("manualLat").value.replace(",","."));
+  const lon=parseFloat($("manualLon").value.replace(",","."));
+  if(Number.isFinite(lat)&&Number.isFinite(lon)){
+    boat={lat,lon,accuracy:null,time:Date.now()};
+    $("boatPos").textContent=fmtPos(boat);
+    setSaveState("Änderungen noch nicht gespeichert");
+  } else {
+    alert("Bitte gültige Koordinaten eingeben.");
+  }
+});
+
+/* ---------- Sterne ---------- */
+$("stars").addEventListener("click",e=>{
+  const v=Number(e.target.dataset.v||0);
+  if(!v) return;
+  $("rating").value=String(v);
+  [...$("stars").querySelectorAll("label")].forEach(l=>l.classList.toggle("active",Number(l.dataset.v)<=v));
+  setSaveState("Änderungen noch nicht gespeichert");
+});
+
+/* ---------- Fotos: iPhone/iPad-freundlich verkleinern ---------- */
+function fileToDataURL(f){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=rej;
+    r.readAsDataURL(f);
+  });
+}
+
+function loadImage(dataUrl){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>res(img);
+    img.onerror=rej;
+    img.src=dataUrl;
+  });
+}
+
+async function compressPhoto(file){
+  const original = await fileToDataURL(file);
+  const img = await loadImage(original);
+
+  const MAX = 1600;
+  let w = img.naturalWidth || img.width;
+  let h = img.naturalHeight || img.height;
+  const scale = Math.min(1, MAX / Math.max(w,h));
+  w = Math.max(1, Math.round(w*scale));
+  h = Math.max(1, Math.round(h*scale));
+
+  const canvas=document.createElement("canvas");
+  canvas.width=w;
+  canvas.height=h;
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(img,0,0,w,h);
+
+  const data = canvas.toDataURL("image/jpeg",0.78);
+  return {
+    name: (file.name || "foto").replace(/\.[^.]+$/,"") + ".jpg",
+    type: "image/jpeg",
+    data,
+    width:w,
+    height:h
+  };
+}
+
+$("photos").addEventListener("change", async e=>{
+  const files=[...e.target.files];
+  if(!files.length) return;
+
+  $("photos").disabled=true;
+  setSaveState("Fotos werden vorbereitet …");
+
+  try{
+    for(const f of files){
+      if(!f.type.startsWith("image/")){
+        alert(`"${f.name}" ist kein unterstütztes Bild.`);
+        continue;
+      }
+      try{
+        const p=await compressPhoto(f);
+        photosData.push(p);
+      }catch(err){
+        console.error(err);
+        alert(`Das Foto "${f.name}" konnte nicht verarbeitet werden.`);
+      }
+    }
+    renderPhotos();
+    setSaveState("Fotos bereit – Station noch speichern");
+  }finally{
+    $("photos").disabled=false;
+    e.target.value="";
+  }
+});
+
+function renderPhotos(){
+  $("photoPreview").innerHTML=photosData.map((p,i)=>`
+    <div style="position:relative">
+      <img src="${p.data}" alt="Foto ${i+1}">
+      <button type="button" data-photo-index="${i}" aria-label="Foto löschen"
+        style="position:absolute;right:4px;top:4px;border:0;border-radius:999px;width:28px;height:28px;background:#0009;color:#fff;font-size:18px;line-height:28px;padding:0">×</button>
+    </div>`).join("");
+
+  $("photoPreview").querySelectorAll("[data-photo-index]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const i=Number(btn.dataset.photoIndex);
+      photosData.splice(i,1);
+      renderPhotos();
+      setSaveState("Änderungen noch nicht gespeichert");
+    });
+  });
+}
+
+/* ---------- IndexedDB ---------- */
+const DB_NAME="NIKIRevierLogDB";
+const DB_VERSION=1;
+const STORE="stations";
+
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(STORE)){
+        db.createObjectStore(STORE,{keyPath:"id"});
+      }
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+
+async function dbGetAll(){
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE,"readonly");
+    const req=tx.objectStore(STORE).getAll();
+    req.onsuccess=()=>resolve(req.result || []);
+    req.onerror=()=>reject(req.error);
+    tx.oncomplete=()=>db.close();
+  });
+}
+
+async function dbPut(item){
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).put(item);
+    tx.oncomplete=()=>{ db.close(); resolve(); };
+    tx.onerror=()=>{ db.close(); reject(tx.error); };
+    tx.onabort=()=>{ db.close(); reject(tx.error || new Error("Speichern abgebrochen")); };
+  });
+}
+
+async function dbDelete(id){
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete=()=>{ db.close(); resolve(); };
+    tx.onerror=()=>{ db.close(); reject(tx.error); };
+  });
+}
+
+/* Alte localStorage-Daten einmalig übernehmen. */
+async function migrateOldStorage(){
+  const marker="nikiIndexedDBMigratedV1";
+  if(localStorage.getItem(marker)==="1") return;
+
+  try{
+    const old=JSON.parse(localStorage.getItem("nikiStations")||"[]");
+    if(Array.isArray(old) && old.length){
+      const current=await dbGetAll();
+      const ids=new Set(current.map(x=>x.id));
+      for(const item of old){
+        if(item && item.id && !ids.has(item.id)){
+          await dbPut(item);
+        }
+      }
+    }
+    localStorage.setItem(marker,"1");
+  }catch(err){
+    console.warn("Migration alter Daten nicht vollständig:",err);
+  }
+}
+
+/* ---------- Formular ---------- */
+function readForm(){
+  const data={};
+  fields.forEach(id=>data[id]=$(id).value);
+  data.id=editingId||("st_"+Date.now()+"_"+Math.random().toString(36).slice(2,8));
+  data.anchor=anchor;
+  data.boat=boat;
+  data.photos=photosData;
+  data.savedAt=Date.now();
+  return data;
+}
+
+function fillForm(d){
+  editingId=d.id;
+  fields.forEach(id=>{ if($(id)) $(id).value=d[id]??""; });
+  anchor=d.anchor||null;
+  boat=d.boat||null;
+  photosData=Array.isArray(d.photos)?d.photos:[];
+  $("anchorPos").textContent=fmtPos(anchor);
+  $("boatPos").textContent=fmtPos(boat);
+  renderPhotos();
+  const rv=Number(d.rating||0);
+  [...$("stars").querySelectorAll("label")].forEach(l=>l.classList.toggle("active",Number(l.dataset.v)<=rv));
+  setSaveState("wird bearbeitet");
+}
+
+function clearForm(){
+  editingId=null;
+  fields.forEach(id=>{
+    if($(id).tagName==="SELECT") $(id).selectedIndex=0;
+    else $(id).value="";
+  });
+  anchor=null;
+  boat=null;
+  photosData=[];
+  $("anchorPos").textContent="noch nicht erfasst";
+  $("boatPos").textContent="noch nicht erfasst";
+  renderPhotos();
+  [...$("stars").querySelectorAll("label")].forEach(l=>l.classList.remove("active"));
+  nowDefaults();
+  setSaveState("noch nicht gespeichert");
+}
+$("clear").addEventListener("click",clearForm);
+
+/* Jede normale Eingabe markiert die Station als geändert. */
+document.querySelectorAll("#formView input, #formView select, #formView textarea").forEach(el=>{
+  if(el.id!=="photos"){
+    el.addEventListener("input",()=>setSaveState("Änderungen noch nicht gespeichert"));
+    el.addEventListener("change",()=>setSaveState("Änderungen noch nicht gespeichert"));
+  }
+});
+
+/* ---------- Speichern ---------- */
+$("save").addEventListener("click",async ()=>{
+  const d=readForm();
+  if(!d.name.trim()){
+    alert("Bitte zuerst einen Namen für die Station eintragen.");
+    return;
+  }
+
+  $("save").disabled=true;
+  setSaveState("wird gespeichert …");
+
+  try{
+    await dbPut(d);
+
+    /* Sicherheitsprüfung: Datensatz unmittelbar wieder lesen. */
+    const check=(await dbGetAll()).find(x=>x.id===d.id);
+    if(!check) throw new Error("Speicherprüfung fehlgeschlagen");
+
+    editingId=d.id;
+    setSaveState("sicher gespeichert ✓",true);
+    await renderList();
+  }catch(err){
+    console.error(err);
+    setSaveState("Speichern fehlgeschlagen");
+    alert("Die Station konnte nicht gespeichert werden. Bitte zuerst einen JSON-Export als Sicherung erstellen und es danach erneut versuchen.");
+  }finally{
+    $("save").disabled=false;
+  }
+});
+
+/* ---------- Stationsliste ---------- */
+async function renderList(){
+  let a=[];
+  try{
+    a=(await dbGetAll()).sort((x,y)=>(y.savedAt||0)-(x.savedAt||0));
+  }catch(err){
+    console.error(err);
+    $("stationList").innerHTML='<p class="hint">Gespeicherte Stationen konnten nicht gelesen werden.</p>';
+    return;
+  }
+
+  if(!a.length){
+    $("stationList").innerHTML='<p class="hint">Noch keine Station gespeichert.</p>';
+    return;
+  }
+
+  $("stationList").innerHTML=a.map(d=>`
+    <div class="station">
+      <h3>${escapeHtml(d.name)} <span class="badge">${escapeHtml(d.type||"")}</span></h3>
+      <small>${escapeHtml(d.date||"")} · ${d.boat?escapeHtml(Number(d.boat.lat).toFixed(5)+", "+Number(d.boat.lon).toFixed(5)):"keine GPS-Position"} · ${Array.isArray(d.photos)?d.photos.length:0} Foto(s)</small>
+      <div class="row" style="margin-top:8px">
+        <button class="btn secondary editBtn" data-id="${escapeHtml(d.id)}" type="button">Bearbeiten</button>
+        <button class="btn danger deleteBtn" data-id="${escapeHtml(d.id)}" type="button">Löschen</button>
+      </div>
+    </div>`).join("");
+
+  document.querySelectorAll(".editBtn").forEach(b=>b.addEventListener("click",async ()=>{
+    const d=(await dbGetAll()).find(x=>x.id===b.dataset.id);
+    if(d){ fillForm(d); show("formView"); }
+  }));
+
+  document.querySelectorAll(".deleteBtn").forEach(b=>b.addEventListener("click",async ()=>{
+    if(confirm("Diese Station wirklich löschen?")){
+      await dbDelete(b.dataset.id);
+      await renderList();
+    }
+  }));
+}
+
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g,m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+  }[m]));
+}
+
+/* ---------- Navigation ---------- */
+function show(id){
+  ["formView","listView","exportView"].forEach(v=>$(v).classList.toggle("hide",v!==id));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$("navForm").addEventListener("click",()=>show("formView"));
+$("navList").addEventListener("click",async ()=>{ await renderList(); show("listView"); });
+$("navExport").addEventListener("click",()=>show("exportView"));
+
+/* ---------- Export ---------- */
+function dl(name,content,type){
+  const blob=new Blob([content],{type});
+  const u=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=u;
+  a.download=name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
+
+$("exportJson").addEventListener("click",async ()=>{
+  try{
+    const a=await dbGetAll();
+    dl("NIKI-RevierLog-"+new Date().toISOString().slice(0,10)+".json",
+       JSON.stringify(a,null,2),
+       "application/json");
+  }catch(err){
+    alert("JSON-Export fehlgeschlagen.");
+  }
+});
+
+$("exportCsv").addEventListener("click",async ()=>{
+  try{
+    const a=await dbGetAll();
+    const cols=["name","type","date","time","boat_lat","boat_lon","anchor_lat","anchor_lon","depthBoat","depthAnchor","chain","ground","holding","mooring","windDir","wind","gust","protection","water","power","diesel","fee","restaurant","rating","return","tip","story"];
+    const rows=[cols.join(";")];
+    for(const d of a){
+      const obj={...d,
+        boat_lat:d.boat?.lat??"", boat_lon:d.boat?.lon??"",
+        anchor_lat:d.anchor?.lat??"", anchor_lon:d.anchor?.lon??""
+      };
+      rows.push(cols.map(c=>`"${String(obj[c]??"").replaceAll('"','""')}"`).join(";"));
+    }
+    dl("NIKI-RevierLog-"+new Date().toISOString().slice(0,10)+".csv",
+       rows.join("\n"),
+       "text/csv;charset=utf-8");
+  }catch(err){
+    alert("CSV-Export fehlgeschlagen.");
+  }
+});
+
+
+/* ---------- JSON-Import ---------- */
+$("importJson").addEventListener("click",()=>{
+  $("importJsonFile").click();
+});
+
+$("importJsonFile").addEventListener("change", async e=>{
+  const file=e.target.files && e.target.files[0];
+  e.target.value="";
+  if(!file) return;
+
+  try{
+    const text=await file.text();
+    const data=JSON.parse(text);
+
+    if(!Array.isArray(data)){
+      throw new Error("Die Datei enthält keine gültige RevierLog-Sicherung.");
+    }
+
+    const valid=data.filter(item =>
+      item &&
+      typeof item==="object" &&
+      typeof item.id==="string" &&
+      typeof item.name==="string"
+    );
+
+    if(!valid.length && data.length){
+      throw new Error("In der Datei wurden keine gültigen Stationen gefunden.");
+    }
+
+    const current=await dbGetAll();
+    const merged=new Map(current.map(item=>[item.id,item]));
+
+    for(const item of valid){
+      merged.set(item.id,item);
+    }
+
+    if(!confirm(
+      `${valid.length} Station(en) aus "${file.name}" importieren?\n\n` +
+      `Vorhandene Stationen bleiben erhalten. Gleiche Einträge werden ersetzt.`
+    )){
+      return;
+    }
+
+    for(const item of merged.values()){
+      await dbPut(item);
+    }
+
+    await renderList();
+    alert(`${valid.length} Station(en) wurden erfolgreich importiert.`);
+  }catch(err){
+    console.error(err);
+    alert("Import fehlgeschlagen: " + (err.message || "Ungültige JSON-Datei."));
+  }
+});
+
+/* ---------- Start ---------- */
+(async function init(){
+  try{
+    await migrateOldStorage();
+    await renderList();
+  }catch(err){
+    console.error(err);
+    alert("Der Datenspeicher konnte nicht geöffnet werden. Bitte Safari neu laden.");
+  }
+})();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
